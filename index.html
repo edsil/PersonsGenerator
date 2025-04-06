@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="script.js" defer></script>
+    <link rel="stylesheet" href="style.css">
+    <title>Persons Generator</title>
+</head>
+<body>
+    <h1>Persons Generator</h1>
+    <!-- <button id="countNamesPerCountry" onclick="countNamesPerCountry()">Count Names Per Country</button> -->
+    <!-- <button id="countSurNamesPerCountry" onclick="countSurnamesPerCountry()">Count Surnames Per Country</button> -->
+    <div class="tab">
+        <button class="tablinks" id="btnparameters" onclick="openTab(event, 'parameters')">Parameters</button>
+        <button class="tablinks" id="btnname-list" onclick="openTab(event, 'name-list')">Generated List</button>
+        <button class="tablinks" id="btnnames-country-count" onclick="openTab(event, 'names-country-count')">Names Per Country</button>
+        <button class="tablinks" id="btnsurnames-country-count" onclick="openTab(event, 'surnames-country-count')">Surnames Per Country</button>
+      </div>
+    <div id="parameters" class="tabcontent">
+        <button id="generate" onclick="generatePersons()">Generate List</button><br>
+        <label for="number-of-persons">Number of Persons to Generate:</label>
+        <input type="number" id="number-of-persons" value="10" /><br>
+        <label for="country-origin">Persons country list:</label>
+        <input type="text" id="country-origin" placeholder="Countries code separated by spaces or commas. Leave blank for all" /><br>
+        <label for="eye-colors">Eye colours:</label>
+        <input type="text" id="eye-colors" value="Brown, Blue, Green, Hazel, Amber, Gray" /><br>
+        <label for="hair-colors">Hair colours:</label>
+        <input type="text" id="hair-colors" value="Brown, Black, Blonde, Ginger, Gray, White" /><br>
+        <label for="dob-from">DOB From:</label>
+        <input type="date" id="dob-from" value="1950-01-01"/><br>
+        <label for="dob-to">DOB To:</label>
+        <input type="date" id="dob-to" value="2020-12-31"/><br>
+        <b>Gender Distribution:</b><br>
+        <label for="male">Male:</label>
+        <input type="range" id="male" min="0" max="100" value="45" step="0.05"/><output id="male-valuelabel"></output><br>
+        <label for="female">Female:</label>
+        <input type="range" id="female" min="0" max="100" value="45" step="0.05"/><output id="female-valuelabel"></output><br>
+        <label for="othergender">Other:</label>
+        <input type="range" id="othergender" min="0" max="100" value="10" step="0.05"/><output id="othergender-valuelabel"></output><br><br>
+        <label for="clearancelevel">Clearance Levels:</label>
+        <input type="text" id="clearancelevel" placeholder="Clearance levels separated by spaces or commas. Leave blank for none" value="" /><br>
+        <label for="pob">Place of birth:</label>
+        <input type="text" id="pob" placeholder="All persons will be set with the value entered here" value="" /><br>
+        <label for="nationality">Nationality:</label>
+        <output id="nationality" style="color:darkgray">Auto</output><br>
+        <label for="phonenumber">Phone Number:</label>
+        <select id="phonenumber"><option value="blank">Blank</option><option value="random">Randomly Generated</option></select><br>
+        <label for="email">Email:</label>
+        <select id="email">
+            <option value="f1l9">First letter of name + full surname</option>
+            <option value="l9f1">Full surname + first letter of name</option>
+            <option value="l9f9">Full surname + full name</option>
+            <option value="f9l9">Full name + full surname</option>
+            <option value="l9dotf9">Full surname + dot + full name</option>
+            <option value="f9dotl9">Full name + dot + full surname</option>
+            <option value="blank">Blank</option>
+        </select><output id="emailsymbol"> @ </output><input type="text" id="emaildomain" class="smallinput" value="example.com" /><br>
+        <label for="address">Address:</label>
+        <output id="address" style="color:darkgray">Blank</output><br>
+        <label for="health">Health:</label>
+        <input type="text" id="health" placeholder="All persons will be set with the value entered here" value="" /><br>
+
+
+    </div>
+    <div id="name-list" class="tabcontent"></div>
+    <div id="names-country-count" class="tabcontent"></div>
+    <div id="surnames-country-count" class="tabcontent"></div>
+</body>
+</html>
