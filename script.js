@@ -1,7 +1,10 @@
 const namesFile = 'names.json';
 const surnamesFile = 'surnames.json';
-
-var listOfNames, listOfSurnames;
+const countriesFile = 'countries.json'; // Source: https://github.com/lukes/ISO-3166-Countries-with-Regional-Codes/tree/master/all
+const eyeColors = [{label:"Brown", value:6}, {label:"Blue", value:2}, {label:"Green", value:3}, {label:"Gray", value:1}, {label:"Hazel", value:2}];
+const hairColors = [{label:"Brown", value:6}, {label:"Black", value:2}, {label:"Blonde", value:3}, {label:"Red", value:1}, {label:"Gray", value:3}];
+var validCountries;
+var listOfNames, listOfSurnames, listOfCountries;
 var filteredNamesMale, filteredNamesFemale, filteredSurnames;
 var countNames, countSurnames;
 
@@ -16,15 +19,34 @@ var paramNumberOfPersons, paramListOfCountries, paramListEyeColors, paramListHai
 var paramDobFrom, paramDobTo;
 var paramMaleGender, paramFemaleGender, paramOtherGender;
 var paramClearanceList, paramPob, paramPhoneType, paramEmailType, paramEmailDomain, paramHealth;
+loadCountries();
 
-window.onload = function() {
-    countNamesPerCountry();
-    countSurnamesPerCountry();
+
+window.onload = async function() { 
+    await countNamesPerCountry();
+    await countSurnamesPerCountry();
+    var setCountryNames = new Set();
+    var setCountrySurnames = new Set();
+    countNames.forEach(entry => {setCountryNames.add(entry.country)});
+    countSurnames.forEach(entry => {setCountrySurnames.add(entry.country)});
+    validCountries = [];
+    setCountryNames.forEach(country => {
+        if(setCountrySurnames.has(country)){
+            validCountries.push({label:country, value:1});
+        }
+    });
+
     openTab(null, 'parameters');
     numberOfPersonsValue = document.getElementById('number-of-persons');
     countryOriginValue = document.getElementById("country-origin");
+    countryOriginValue.appendChild(listOfPercentiles(validCountries, 'country-origin'));
+    countryOriginValue.style.display = "none";
     eyeColorValue = document.getElementById("eye-colors");
+    eyeColorValue.appendChild(listOfPercentiles(eyeColors, 'eye-colors'));
+    eyeColorValue.style.display = "none";
     hairColorValue = document.getElementById("hair-colors");
+    hairColorValue.appendChild(listOfPercentiles(hairColors, 'hair-colors'));
+    hairColorValue.style.display = "none";
     dobFromValue = document.getElementById("dob-from");
     dobToValue = document.getElementById("dob-to");
     maleGenderValue = document.getElementById("male");
@@ -44,7 +66,33 @@ window.onload = function() {
     selectorEmail.addEventListener('input', ()=>handleSelectorEmailChange());
     emailDomainValue = document.getElementById("emaildomain");
     healthValue = document.getElementById("health");
-    
+
+}
+
+function toggleEyeColors() {
+    if (eyeColorValue.style.display === "none") {
+        eyeColorValue.style.display = "block";
+    } else {
+        eyeColorValue.style.display = "none";
+    }
+}
+
+function toggleHairColors() {
+    if (hairColorValue.style.display === "none") {
+        hairColorValue.style.display = "block";
+    }
+    else {
+        hairColorValue.style.display = "none";
+    }
+}
+
+function toggleCountryOrigin() {
+    if (countryOriginValue.style.display === "none") {
+        countryOriginValue.style.display = "block";
+    }
+    else {
+        countryOriginValue.style.display = "none";
+    }
 }
 
 function generatePersons() {
@@ -59,19 +107,15 @@ function loadParameters() {
     var setCountrySurnames = new Set();
     countNames.forEach(entry => {setCountryNames.add(entry.country)});
     countSurnames.forEach(entry => {setCountrySurnames.add(entry.country)});
-
-    paramListOfCountries = countryOriginValue.value.toLowerCase().trim().replace(/[,\s]+/g, ',').split(',').filter(e=> e.length==2);
-    if(paramListOfCountries.length > 0){
-        paramListOfCountries = paramListOfCountries.filter(country => {return setCountryNames.has(country) && setCountrySurnames.has(country)});
-    } else {
-        paramListOfCountries = Array.from(setCountryNames).filter(country => {return setCountrySurnames.has(country)});
-    }
-    filteredNamesMale = listOfNames.filter(name => paramListOfCountries.includes(name.country) && (name.gender=="male" || name.gender=="unisex"));
-    filteredNamesFemale = listOfNames.filter(name => paramListOfCountries.includes(name.country) && (name.gender=="female" || name.gender=="unisex"));
-    filteredSurnames = listOfSurnames.filter(surname => paramListOfCountries.includes(surname.country));
+    
+    paramListOfCountries = getPercentiles('country-origin');
+    var listOfCountries = paramListOfCountries.map(entry => entry.label);
+    filteredNamesMale = listOfNames.filter(name => listOfCountries.includes(name.country) && (name.gender=="male" || name.gender=="unisex"));
+    filteredNamesFemale = listOfNames.filter(name => listOfCountries.includes(name.country) && (name.gender=="female" || name.gender=="unisex"));
+    filteredSurnames = listOfSurnames.filter(surname => listOfCountries.includes(surname.country));
     paramNumberOfPersons = Math.max(1,parseInt(numberOfPersonsValue.value));
-    paramListEyeColors = eyeColorValue.value.toLowerCase().trim().replace(/[,\s]+/g, ',').split(',').filter(e=> e.length>1);
-    paramListHairColors = hairColorValue.value.toLowerCase().trim().replace(/[,\s]+/g, ',').split(',').filter(e=> e.length>1);
+    paramListEyeColors = getPercentiles('eye-colors');
+    paramListHairColors = getPercentiles('hair-colors');
     paramDobFrom = Date.parse(dobFromValue.value);
     paramDobTo = Date.parse(dobToValue.value)
     paramMaleGender = parseFloat(maleGenderValue.value);
@@ -85,14 +129,14 @@ function loadParameters() {
         paramEmailDomain = emailDomainValue.value.toLowerCase().trim();
     } else paramEmailDomain = null;
     paramHealth = healthValue.value;
-    console.log(paramListOfCountries, paramNumberOfPersons, paramListEyeColors, paramListHairColors, paramDobFrom, paramDobTo, paramMaleGender, paramFemaleGender, paramOtherGender, paramClearanceList, paramPob, paramPhoneType, paramEmailType, paramEmailDomain, paramHealth);
-    const numberOfPersons = Math.min(document.getElementById('number-of-persons').value, listOfNames.length * listOfSurnames.length);
+    //console.log(paramListOfCountries, paramNumberOfPersons, paramListEyeColors, paramListHairColors, paramDobFrom, paramDobTo, paramMaleGender, paramFemaleGender, paramOtherGender, paramClearanceList, paramPob, paramPhoneType, paramEmailType, paramEmailDomain, paramHealth);
+    //const numberOfPersons = Math.min(document.getElementById('number-of-persons').value, listOfNames.length * listOfSurnames.length);
 }
 
 function generateRandomPersons(){
     const persons = [];
     for(let i = 0; i < paramNumberOfPersons; i++) {
-        const randCountry = paramListOfCountries[Math.floor(Math.random() * paramListOfCountries.length)];
+        const randCountry = randomFromList(paramListOfCountries);
         const randGenderValue = Math.random() * 100;
         if(randGenderValue < paramMaleGender) {
             randGender = "Male";
@@ -100,13 +144,13 @@ function generateRandomPersons(){
             randGender = "Female";
         } else  randGender = "Other";
         const randName = getRandomName(randCountry, randGender);
-        const randEyeColor = paramListEyeColors[Math.floor(Math.random() * paramListEyeColors.length)];
-        const randHairColor = paramListHairColors[Math.floor(Math.random() * paramListHairColors.length)];
+        const randEyeColor = randomFromList(paramListEyeColors);
+        const randHairColor = randomFromList(paramListHairColors);
         const randDob = (new Date(paramDobFrom + Math.random() * (paramDobTo - paramDobFrom))).toISOString().split('T')[0];
         var randGender;
         
         const randClearance = (paramClearanceList.length==0)?null:paramClearanceList[Math.floor(Math.random() * paramClearanceList.length)];
-        const randNationality = (randCountry.length==2)?randCountry:null;
+        const randNationality = randCountry;
         const randPhoneNumber = (paramPhoneType=='blank')?null:generateRandomPhoneNumber(paramPhoneType, randCountry);
         var randEmail = null;
         if(paramEmailType != 'blank'){
@@ -118,6 +162,22 @@ function generateRandomPersons(){
             email:randEmail, health:randHealth});
     }
     return persons;
+}
+
+function randomFromList(list) {
+    const total = list.reduce((acc, entry) => acc + entry.value, 0);
+    var randomValue = Math.random() * total;
+    var accumulatedValue = 0;
+    var result = null;
+    var found = false;
+    list.forEach(entry => {
+        accumulatedValue += entry.value;
+        if (!found && randomValue <= accumulatedValue) {
+            result = entry.label;
+            found = true;
+        }
+    });
+    return result;
 }
 
 
@@ -151,6 +211,11 @@ function getRandomName(country, gender) {
         names = filteredNamesFemale.filter(name => name.country === country);
     } else {
         names = filteredNamesMale.concat(filteredNamesFemale).filter(name => name.country === country);
+    }
+    if(names.length == 0){
+        console.log(country, gender);
+        console.log(filteredNamesMale);
+        console.log(filteredNamesFemale);
     }
     const randomIndexName = Math.floor(Math.random() * names.length);
     const surnames = filteredSurnames.filter(surname => surname.country === country);
@@ -186,44 +251,40 @@ function handleSelectorEmailChange() {
         }
 }
 
-function oldgeneratePersons(){
-    loadParameters();
-    fetch(namesFile)
-        .then(response => response.json())
-        .then(data => {
-            const nameList = document.getElementById('name-list');
-            nameList.innerHTML = ''; // Clear existing names
-            const listSize = data.length;
-            const numberOfPersons = Math.min(document.getElementById('number-of-persons').value, listSize);
-            console.log(listSize);
-            const randomIndices = new Set();
-            while (randomIndices.size < numberOfPersons) {
-                const randomIndex = Math.floor(Math.random() * listSize);
-                randomIndices.add(randomIndex);
-            }
-            randomIndices.forEach(index => {
-                const li = document.createElement('li');
-                li.textContent = data[index].name;
-                nameList.appendChild(li);
-            });
-        })
-        .catch(error => console.error('Error fetching names:', error));
-    openTab(null, 'name-list')
+function convertCountryCodeToName(list, fieldName){
+    const convertedList = list.map(entry => {
+        const countryCode = entry[fieldName].toLowerCase();
+        const countryName = listOfCountries[countryCode]?.name || countryCode;
+        return {...entry, [fieldName]: countryName};
+    });
+    return convertedList;
 }
 
 async function countNamesPerCountry() {
     listOfNames = await loadJSON(namesFile);
+    listOfNames = convertCountryCodeToName(listOfNames, 'country');
     countNames = sortEntries(countEntries(listOfNames, 'country'), 'country');
-
     postEntriesInTable(countNames, 'names-country-count');
 }
 
 async function countSurnamesPerCountry() {
     listOfSurnames = await loadJSON(surnamesFile);
+    listOfSurnames = convertCountryCodeToName(listOfSurnames, 'country');
     countSurnames = sortEntries(countEntries(listOfSurnames, 'country'), 'country');
     postEntriesInTable(countSurnames, 'surnames-country-count');
 }
 
+async function loadCountries() {
+    const countries = await loadJSON(countriesFile);
+    listOfCountries = new Object();
+    countries.forEach(country => {
+        const countryCode = country["alpha-2"].toLowerCase();
+        const countryName = country.name;
+        const countryRegion = country.region;
+        listOfCountries[countryCode] = {name:countryName, region:countryRegion};
+    });
+    //console.log(listOfCountries);
+}
 
 
 function sortEntries(data, columnToSort) {
@@ -247,13 +308,163 @@ function countEntries(data, columnToCount) {
     return countedArray;
 }
 
+function listOfPercentiles(data, name){
+    const totalValues = data.reduce((acc, entry) => acc + entry.value, 0);
+    const div = document.createElement('div');
+    const table = document.createElement('table');
+    table.id = name;
+    const headerRow = document.createElement('tr');
+    const buttonInvert = document.createElement('button');
+    buttonInvert.textContent = "Invert Selection";
+    buttonInvert.onclick = function() {
+        invertSelection(name);
+    };
+    const buttonSelectAll = document.createElement('button');
+    buttonSelectAll.textContent = "Select All";
+    buttonSelectAll.onclick = function() {
+        selectAll(name);
+    }
+    const buttonDeselectAll = document.createElement('button');
+    buttonDeselectAll.textContent = "Clear Selection";
+    buttonDeselectAll.onclick = function() {
+        deselectAll(name);
+    }
+    const th0 = document.createElement('th');
+    headerRow.appendChild(th0);
+    const th1 = document.createElement('th');
+    th1.appendChild(buttonInvert);
+    headerRow.appendChild(th1);
+    const th2 = document.createElement('th');
+    th2.appendChild(buttonSelectAll);
+    headerRow.appendChild(th2);
+    const th3 = document.createElement('th');
+    th3.appendChild(buttonDeselectAll);
+    headerRow.appendChild(th3);
+    
+    table.appendChild(headerRow);
+    data.forEach(entry => {
+        const row = document.createElement('tr');
+        const td1 = document.createElement('td'); // Checbox
+        const td2 = document.createElement('td'); // Label
+        const td3 = document.createElement('td'); // Slider
+        const td4 = document.createElement('td'); // Percentage
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.checked = true;
+        checkbox.id = "check"+entry.label;
+        checkbox.oninput = function() {
+            adjustPercentiles(name);
+        };
+        td1.appendChild(checkbox);
+        td2.textContent = entry.label;
+        const slider = document.createElement('input');
+        slider.type = 'range';
+        slider.min = 0;
+        slider.max = 100;
+        slider.step = 0.05;
+        slider.value = 100*entry.value/totalValues;
+        slider.id = "slider"+entry.label;
+        slider.oninput = function() {
+            adjustPercentiles(name);
+        };
+        td3.appendChild(slider);
+        td4.textContent = Math.round(100*entry.value/totalValues) + "%";
+        td4.id = "percent"+entry.label;
+        row.appendChild(td1);
+        row.appendChild(td2);
+        row.appendChild(td3);
+        row.appendChild(td4);
+        table.appendChild(row);
+    });
+    div.appendChild(table);
+    return div;
+};
+
+function adjustPercentiles(tableName){
+    const table = document.getElementById(tableName);
+    const checkboxes = table.querySelectorAll('input[type="checkbox"]');
+    const sliders = table.querySelectorAll('input[type="range"]');
+    const percentLabels = table.querySelectorAll('td[id^="percent"]');
+    let totalChecked = 0;
+    let totalValue = 0;
+    checkboxes.forEach((checkbox, index) => {
+        if (checkbox.checked) {
+            totalChecked++;
+            totalValue += parseFloat(sliders[index].value);
+            sliders[index].style.display = "";
+        } else {
+            sliders[index].style.display = "none";
+        }
+    });
+    percentLabels.forEach((label, index) => {
+        if (checkboxes[index].checked) {
+            label.textContent = Math.round(100 * sliders[index].value / totalValue) + "%";
+        } else {
+            label.textContent = "0%";
+        }
+    });
+}
+
+function getPercentiles(tableName){
+    const table = document.getElementById(tableName);
+    const checkboxes = table.querySelectorAll('input[type="checkbox"]');
+    const sliders = table.querySelectorAll('input[type="range"]');
+    let totalChecked = 0;
+    let totalValue = 0;
+    checkboxes.forEach((checkbox, index) => {
+        if (checkbox.checked) {
+            totalChecked++;
+            totalValue += parseFloat(sliders[index].value);
+        }
+    });
+    const percentiles = Array.from(checkboxes).map((checkbox, index) => {
+        if (checkbox.checked) {
+            return {label: checkbox.id.replace("check", ""), value: parseFloat(sliders[index].value) / totalValue};
+        } else {
+            return {label: checkbox.id.replace("check", ""), value: 0};
+        }
+    });
+    return percentiles;
+}
+
+function invertSelection(tableName){
+    const table = document.getElementById(tableName);
+    const checkboxes = table.querySelectorAll('input[type="checkbox"]');
+    checkboxes.forEach((checkbox) => {
+        checkbox.checked = !checkbox.checked;
+    });
+    checkboxes[0].dispatchEvent(new Event('input'));
+}
+
+function selectAll(tableName){
+    const table = document.getElementById(tableName);
+    const checkboxes = table.querySelectorAll('input[type="checkbox"]');
+    checkboxes.forEach((checkbox) => {
+        checkbox.checked = true;
+    });
+    checkboxes[0].dispatchEvent(new Event('input'));
+}
+
+function deselectAll(tableName){
+    const table = document.getElementById(tableName);
+    const checkboxes = table.querySelectorAll('input[type="checkbox"]');
+    checkboxes.forEach((checkbox) => {
+        checkbox.checked = false;
+    });
+    checkboxes[0].dispatchEvent(new Event('input'));
+}
+
+
+
+
 function tableFromEntries(data) {
     const table = document.createElement('table');
     const headerRow = document.createElement('tr');
     const headerTitles = Object.keys(data[0]);
     headerTitles.forEach(title => {
         const th = document.createElement('th');
-        th.textContent = title;
+        th.textContent = title.charAt(0).toUpperCase() + title.slice(1);
+        th.onclick = sortTable;
         headerRow.appendChild(th);
     });
     table.appendChild(headerRow);
@@ -261,12 +472,25 @@ function tableFromEntries(data) {
         const row = document.createElement('tr');
         Object.values(entry).forEach(value => {
             const td = document.createElement('td');
+            if(value != null && !isNaN(value)){
+                td.style.textAlign = "right";
+                value = value.toLocaleString();
+            }
+       
             td.textContent = value;
             row.appendChild(td);
         });
         table.appendChild(row);
     });
     return table; 
+}
+
+function sortTable(event){
+    var parent = event.target;
+    while (parent.tagName != "TABLE") {
+        parent = parent.parentElement;
+        console.log(parent.tagName);
+    }
 }
 
 async function loadJSON(fileName) {
@@ -305,22 +529,24 @@ function openTab(evt, tabName) {
     }
 }
 
-var testlist = [{label:"a", value:1}, {label:"b", value:1}, {label:"c", value:1}, {label:"d", value:1}, {label:"e", value:1}];
-randomFromList(testlist);
-randomFromList(testlist);
+
+
+    
+
+// var testlist = [{label:"a", value:1}, {label:"b", value:1}, {label:"c", value:1}, {label:"d", value:1}, {label:"e", value:1}];
+// randomFromList(testlist);
+// randomFromList(testlist);
 
 
 
-function randomFromList(list) {
-    const total = list.reduce((acc, entry) => acc + entry.value, 0);
-    var randomValue = Math.random() * total;
-    var accumulatedValue = 0;
-    list.forEach(entry => {
-        accumulatedValue += entry.value;
-        if (randomValue <= accumulatedValue) {
-            console.log(entry.label);
-            return entry.label;
-        }
-    });
-
-}
+// function randomFromList(list) {
+//     const total = list.reduce((acc, entry) => acc + entry.value, 0);
+//     var randomValue = Math.random() * total;
+//     var accumulatedValue = 0;
+//     list.forEach(entry => {
+//         accumulatedValue += entry.value;
+//         if (randomValue <= accumulatedValue) {
+//             return entry.label;
+//         }
+//     });
+// }

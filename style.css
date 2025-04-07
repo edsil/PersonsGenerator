@@ -1,6 +1,17 @@
-table, th, td {
-    border: 1px solid black;
+  table, th, td {
+    max-width: 100%;
+    border: 2px solid black;
     border-collapse: collapse;
+  }
+
+  th{
+    background-color: #e2e2e2;
+    text-align: center;
+    min-width: 100px;
+  }
+
+  th:hover{
+    background-color: #d2d2d2;
   }
 
   label{
@@ -62,4 +73,10 @@ table, th, td {
     border: 1px solid #ccc;
     border-top: none;
   }
+
+  .centereddiv {
+    width: 100%;
+  }
+ 
+  
   

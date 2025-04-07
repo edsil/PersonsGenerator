@@ -20,13 +20,16 @@
     <div id="parameters" class="tabcontent">
         <button id="generate" onclick="generatePersons()">Generate List</button><br>
         <label for="number-of-persons">Number of Persons to Generate:</label>
-        <input type="number" id="number-of-persons" value="10" /><br>
+        <input type="number" id="number-of-persons" value="1000" /><br><br>
         <label for="country-origin">Persons country list:</label>
-        <input type="text" id="country-origin" placeholder="Countries code separated by spaces or commas. Leave blank for all" /><br>
+        <button id="country-origin-button" onclick="toggleCountryOrigin()">Set Country Origin Proportion</button><br>
+        <div id="country-origin"></div><br>
         <label for="eye-colors">Eye colours:</label>
-        <input type="text" id="eye-colors" value="Brown, Blue, Green, Hazel, Amber, Gray" /><br>
+        <button id="eye-colors-button" onclick="toggleEyeColors()">Set Eye Colors Proportion</button><br>
+        <div id="eye-colors"></div><br>
         <label for="hair-colors">Hair colours:</label>
-        <input type="text" id="hair-colors" value="Brown, Black, Blonde, Ginger, Gray, White" /><br>
+        <button id="hair-colors-button" onclick="toggleHairColors()">Set Hair Colors Proportion</button><br>
+        <div id="hair-colors"></div><br>
         <label for="dob-from">DOB From:</label>
         <input type="date" id="dob-from" value="1950-01-01"/><br>
         <label for="dob-to">DOB To:</label>
@@ -48,19 +51,18 @@
         <select id="phonenumber"><option value="blank">Blank</option><option value="random">Randomly Generated</option></select><br>
         <label for="email">Email:</label>
         <select id="email">
-            <option value="f1l9">First letter of name + full surname</option>
-            <option value="l9f1">Full surname + first letter of name</option>
-            <option value="l9f9">Full surname + full name</option>
-            <option value="f9l9">Full name + full surname</option>
-            <option value="l9dotf9">Full surname + dot + full name</option>
-            <option value="f9dotl9">Full name + dot + full surname</option>
+            <option value="f9dotl9">[name].[surname]</option>
+            <option value="l9dotf9">[surname].[name]</option>
+            <option value="f1l9">[fistLetterName][surname]</option>
+            <option value="l9f1">[surname][fistLetterName]</option>
+            <option value="l9f9">[surname][name]</option>
+            <option value="f9l9">[name][surname]</option>
             <option value="blank">Blank</option>
         </select><output id="emailsymbol"> @ </output><input type="text" id="emaildomain" class="smallinput" value="example.com" /><br>
         <label for="address">Address:</label>
         <output id="address" style="color:darkgray">Blank</output><br>
         <label for="health">Health:</label>
         <input type="text" id="health" placeholder="All persons will be set with the value entered here" value="" /><br>
-
 
     </div>
     <div id="name-list" class="tabcontent"></div>
