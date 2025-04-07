@@ -2,7 +2,7 @@ const namesFile = 'names.json';
 const surnamesFile = 'surnames.json';
 
 var listOfNames, listOfSurnames;
-var filteredNames, filteredSurnames;
+var filteredNamesMale, filteredNamesFemale, filteredSurnames;
 var countNames, countSurnames;
 
 var numberOfPersonsValue, countryOriginValue, eyeColorValue, hairColorValue;
@@ -66,7 +66,8 @@ function loadParameters() {
     } else {
         paramListOfCountries = Array.from(setCountryNames).filter(country => {return setCountrySurnames.has(country)});
     }
-    filteredNames = listOfNames.filter(name => paramListOfCountries.includes(name.country));
+    filteredNamesMale = listOfNames.filter(name => paramListOfCountries.includes(name.country) && (name.gender=="male" || name.gender=="unisex"));
+    filteredNamesFemale = listOfNames.filter(name => paramListOfCountries.includes(name.country) && (name.gender=="female" || name.gender=="unisex"));
     filteredSurnames = listOfSurnames.filter(surname => paramListOfCountries.includes(surname.country));
     paramNumberOfPersons = Math.max(1,parseInt(numberOfPersonsValue.value));
     paramListEyeColors = eyeColorValue.value.toLowerCase().trim().replace(/[,\s]+/g, ',').split(',').filter(e=> e.length>1);
@@ -92,17 +93,18 @@ function generateRandomPersons(){
     const persons = [];
     for(let i = 0; i < paramNumberOfPersons; i++) {
         const randCountry = paramListOfCountries[Math.floor(Math.random() * paramListOfCountries.length)];
-        const randName = getRandomName(randCountry);
-        const randEyeColor = paramListEyeColors[Math.floor(Math.random() * paramListEyeColors.length)];
-        const randHairColor = paramListHairColors[Math.floor(Math.random() * paramListHairColors.length)];
-        const randDob = (new Date(paramDobFrom + Math.random() * (paramDobTo - paramDobFrom))).toISOString().split('T')[0];
-        var randGender;
         const randGenderValue = Math.random() * 100;
         if(randGenderValue < paramMaleGender) {
             randGender = "Male";
         } else if(randGenderValue < paramMaleGender + paramFemaleGender) {
             randGender = "Female";
         } else  randGender = "Other";
+        const randName = getRandomName(randCountry, randGender);
+        const randEyeColor = paramListEyeColors[Math.floor(Math.random() * paramListEyeColors.length)];
+        const randHairColor = paramListHairColors[Math.floor(Math.random() * paramListHairColors.length)];
+        const randDob = (new Date(paramDobFrom + Math.random() * (paramDobTo - paramDobFrom))).toISOString().split('T')[0];
+        var randGender;
+        
         const randClearance = (paramClearanceList.length==0)?null:paramClearanceList[Math.floor(Math.random() * paramClearanceList.length)];
         const randNationality = (randCountry.length==2)?randCountry:null;
         const randPhoneNumber = (paramPhoneType=='blank')?null:generateRandomPhoneNumber(paramPhoneType, randCountry);
@@ -121,8 +123,8 @@ function generateRandomPersons(){
 
 function generateRandomEmail(randName, paramEmailDomain, paramEmailType){
     const nameParts = randName.split(" ");
-    const firstName = nameParts[0].toLowerCase();
-    const lastName = nameParts[1].toLowerCase();
+    const firstName = nameParts[0].toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[.,\/#!$%\^&\*;:{}=\-_`\'~()]/g,"");
+    const lastName = nameParts[1].toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[.,\/#!$%\^&\*;:{}=\-_`\'~()]/g,"");
     let email = null;
     if(paramEmailType == 'f1l9'){
         email = `${firstName.substring(0,1)}${lastName}@${paramEmailDomain}`;
@@ -141,8 +143,15 @@ function generateRandomEmail(randName, paramEmailDomain, paramEmailType){
 }
 
 
-function getRandomName(country) {
-    const names = filteredNames.filter(name => name.country === country);
+function getRandomName(country, gender) {
+    var names;
+    if(gender.toLowerCase().startsWith("m")){
+        names = filteredNamesMale.filter(name => name.country === country);
+    } else if(gender.toLowerCase().startsWith("f")){
+        names = filteredNamesFemale.filter(name => name.country === country);
+    } else {
+        names = filteredNamesMale.concat(filteredNamesFemale).filter(name => name.country === country);
+    }
     const randomIndexName = Math.floor(Math.random() * names.length);
     const surnames = filteredSurnames.filter(surname => surname.country === country);
     const randomIndexSurname = Math.floor(Math.random() * surnames.length);
@@ -294,5 +303,24 @@ function openTab(evt, tabName) {
     } else {
         document.getElementById("btn"+tabName).className += " active";
     }
+}
+
+var testlist = [{label:"a", value:1}, {label:"b", value:1}, {label:"c", value:1}, {label:"d", value:1}, {label:"e", value:1}];
+randomFromList(testlist);
+randomFromList(testlist);
+
+
+
+function randomFromList(list) {
+    const total = list.reduce((acc, entry) => acc + entry.value, 0);
+    var randomValue = Math.random() * total;
+    var accumulatedValue = 0;
+    list.forEach(entry => {
+        accumulatedValue += entry.value;
+        if (randomValue <= accumulatedValue) {
+            console.log(entry.label);
+            return entry.label;
+        }
+    });
 
 }
