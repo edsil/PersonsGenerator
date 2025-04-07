@@ -455,6 +455,69 @@ function deselectAll(tableName){
 }
 
 
+class SortableTable {
+    constructor(data, divID) {
+        this.divID = divID;
+        this.data = data;
+        this.sortColumn = null;
+        this.sortDirection = 'asc'; // 'asc' or 'desc'
+        this.table = this.getTable();
+        const divOfTable = document.getElementById(this.divID);
+        if(!divOfTable){
+            console.error("Div with ID " + this.divID + " not found.");
+            return;
+        }
+        divOfTable.innerHTML = '';
+        divOfTable.appendChild(this.table);
+    }
+    getTable(){
+        const table = document.createElement('table');
+        const headerRow = document.createElement('tr');
+        const headerTitles = Object.keys(this.data[0]);
+        headerTitles.forEach(title => {
+            const th = document.createElement('th');
+            th.textContent = title.charAt(0).toUpperCase() + title.slice(1);
+            th.onclick = () => this.sortTable(title);
+            headerRow.appendChild(th);
+        });
+        table.appendChild(headerRow);
+        this.data.forEach(entry => {
+            const row = document.createElement('tr');
+            Object.values(entry).forEach(value => {
+                const td = document.createElement('td');
+                if(value != null && !isNaN(value)){
+                    td.style.textAlign = "right";
+                    value = value.toLocaleString();
+                }
+                td.textContent = value;
+                row.appendChild(td);
+            });
+            table.appendChild(row);
+        });
+        return table; 
+    }
+    sortTable(column) {
+        if (this.sortColumn === column) {
+            this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+        }
+        this.sortColumn = column;
+        this.data.sort((a, b) => {
+            if (typeof a[column] === 'number' && typeof b[column] === 'number') {
+                return this.sortDirection === 'asc' ? a[column] - b[column] : b[column] - a[column];
+            } else if (typeof a[column] === 'string' && typeof b[column] === 'string') {
+                return this.sortDirection === 'asc' ? a[column].localeCompare(b[column]) : b[column].localeCompare(a[column]);
+            }
+            return 0;
+        });
+        this.updateTable();
+    }
+    updateTable() {
+        this.table = this.getTable();
+        const divOfTable = document.getElementById(this.divID);
+        divOfTable.innerHTML = '';
+        divOfTable.appendChild(this.table);
+    }
+}
 
 
 function tableFromEntries(data) {
@@ -506,10 +569,9 @@ async function loadJSON(fileName) {
 }
 
 function postEntriesInTable(entriesToPost, elementID) {
-    const countryList = document.getElementById(elementID);
-    countryList.innerHTML = ''; // Clear existing countries
-    const table = tableFromEntries(entriesToPost);
-    countryList.appendChild(table);    
+    
+    const tableClass = new SortableTable(entriesToPost, elementID);
+      
 }
 
 function openTab(evt, tabName) {
