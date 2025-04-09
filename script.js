@@ -1,5 +1,5 @@
-const namesFile = 'names.json';
-const surnamesFile = 'surnames.json';
+const namesFile = 'names.json'; // Source: https://github.com/railsmechanic/firstnames-to-gender/blob/master/names.json
+const surnamesFile = 'surnames.json'; // Source: https://github.com/sigpwned/popular-names-by-country-dataset/blob/main/common-surnames-by-country.csv
 const countriesFile = 'countries.json'; // Source: https://github.com/lukes/ISO-3166-Countries-with-Regional-Codes/tree/master/all
 const eyeColors = [{label:"Brown", value:6}, {label:"Blue", value:2}, {label:"Green", value:3}, {label:"Gray", value:1}, {label:"Hazel", value:2}];
 const hairColors = [{label:"Brown", value:6}, {label:"Black", value:2}, {label:"Blonde", value:3}, {label:"Red", value:1}, {label:"Gray", value:3}];
